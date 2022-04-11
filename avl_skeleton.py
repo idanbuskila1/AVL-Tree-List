@@ -95,18 +95,26 @@ class AVLNode(object):
 
     def setParent(self, node):
         self.parent=node
-
+    """
+       update child as the right child of self.
+       @param child: avl node. to be the right child of self.
+        """
     def makeRightChild(self, child):
         self.setRight(child)
         if child.isRealNode():
             child.setParent(self)
 
-
+    """
+       update child as the left child of self.
+       @param child: avl node. to be the left child of self.
+        """
     def makeLeftChild(self, child):
         self.setLeft(child)
         if child.isRealNode():
             child.setParent(self)
-
+    """
+    changing all pointers of given node to None.
+    """
     def garbage(self):
         self.left=None
         self.right=None
@@ -199,6 +207,25 @@ Constructor, you are allowed to add more fields.
     def retrieve(self, i):
         return self.treeSelect(i+1).getValue()
 
+    """finds and returns the node with rank i in tree
+           @param i: the rank of desired node
+           @type i: int
+           @returns: rank i node
+           """
+
+    def treeSelect(self, i):
+
+        def treeSelectRec(x, k):
+            r = x.getLeft().getSize() + 1
+            if k == r:
+                return x
+            elif k < r:
+                return treeSelectRec(x.getLeft(), k)
+            else:
+                return treeSelectRec(x.getRight(), k - r)
+
+        return treeSelectRec(self.root, i)
+
     """performs right rotation for AVL balancing
        @param node: the highest node of the three nodes involved in right rotation
        """
@@ -252,7 +279,7 @@ Constructor, you are allowed to add more fields.
                     return 1
         return 0
 
-    """ballances the path between node to root by AVL rules and updates size & height
+    """ballances the path between y to root by AVL rules and updates size & height
             @param node: the node to begin the check with
             @type node: AVL_Node
             @returns: number of rotations and height updates made in process
@@ -339,22 +366,6 @@ Constructor, you are allowed to add more fields.
         node.makeRightChild(AVLNode(val))
         return node.getRight()
 
-    """finds and returns the node with rank i in tree
-        @param i: the rank of desired node
-        @type i: int
-        @returns: rank i node
-        """
-    def treeSelect(self, i):
-
-        def treeSelectRec(x, k):
-            r = x.getLeft().getSize()+1
-            if k == r:
-                return x
-            elif k < r:
-                return treeSelectRec(x.getLeft(), k)
-            else: return treeSelectRec(x.getRight(), k-r)
-
-        return treeSelectRec(self.root, i)
 
     """
     deletes node, given its a leaf in the tree
@@ -381,6 +392,19 @@ Constructor, you are allowed to add more fields.
             child.setParent(None)
         elif parent.getLeft() is node: parent.makeLeftChild(child)
         else: parent.makeRightChild(child)
+
+    """
+    returns pointer to successor of a given node
+    @pre: node has right child
+    @param node: the node to search successor for
+    @rtype: AVL node
+    """
+    def successor(self, node):
+        node=node.getRight()
+        while node.getLeft() is not self.virtualNode:
+            node = node.getLeft()
+        return node
+
 
     """deletes the i'th item in the list
 
@@ -422,19 +446,6 @@ Constructor, you are allowed to add more fields.
         node.garbage()
         return 0 if parent is None else self.fixTree(parent)
 
-    """
-    returns pointer to successor of a given node
-    @pre: node has right child
-    @param node: the node to search successor for
-    @rtype: AVL node
-    """
-    def successor(self, node):
-        node=node.getRight()
-        while node.getLeft() is not self.virtualNode:
-            node = node.getLeft()
-        return node
-
-
     """returns the value of the first item in the list
 	@rtype: str
 	@returns: the value of the first item, None if the list is empty
@@ -448,7 +459,6 @@ Constructor, you are allowed to add more fields.
         return node.getValue()
 
     """returns the value of the last item in the list
-
 	@rtype: str
 	@returns: the value of the last item, None if the list is empty
 	"""
