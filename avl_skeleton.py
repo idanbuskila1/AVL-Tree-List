@@ -162,12 +162,14 @@ A class implementing the ADT list, using an AVL tree.
 
 
 class AVLTreeList(object):
+    virtualNode = AVLNode(None, -1, 0)  # class attribute
+
     """
 Constructor, you are allowed to add more fields.
 """
     def __init__(self):
         self.root = None
-        self.virtualNode=AVLNode(None,-1,0);
+
 
     def display(self):
         def printTree(node, level=0):
@@ -184,7 +186,7 @@ Constructor, you are allowed to add more fields.
     @returns: True if the list is empty, False otherwise
     """
     def empty(self):
-        return True if self.root == None else False
+        return True if self.root is None else False
 
     """checks if given node is leaf
     @parm node: node to check
@@ -192,7 +194,7 @@ Constructor, you are allowed to add more fields.
     @returns: true if node is leaf, false otherwise
     """
     def isLeaf(self, node):
-        if node.getRight()==self.virtualNode and node.getLeft()==self.virtualNode:
+        if node.getRight() is self.virtualNode and node.getLeft() is self.virtualNode:
             return True
         return False
     """retrieves the value of the i'th item in the list
@@ -263,9 +265,9 @@ Constructor, you are allowed to add more fields.
             parent.makeRightChild(right_node)
         else: parent.makeLeftChild(right_node)
 
-    """updates height and size of every node in a given list by order
+    """updates height and size of every node in a given list in order
         @parm nodes: list of AVL nodes
-        @rtype: Integer
+        @rtype: int
         @returns: 1 if node height was changed not as part of rotation, 0 otherwise
     """
     def update(self, nodes):
@@ -288,7 +290,7 @@ Constructor, you are allowed to add more fields.
     def fixTree(self, y):
         changes=0
         while y is not None:
-            height_changed = self.update([y])#correct size and height, variable stores true if height was changed
+            height_changed = self.update([y])#correct size and height, variable stores 1 if height was changed
             #correct ballance:
             BF = y.getBF()
             if BF==2:
@@ -354,6 +356,7 @@ Constructor, you are allowed to add more fields.
         return 0 if inserted is self.root else self.fixTree(inserted.getParent())
 
     """inserts node at the last position
+            @pre: self.empty() == False
             @param val: value of the new node
             @type val: string
             @returns: pointer to the inserted node
@@ -503,8 +506,65 @@ Constructor, you are allowed to add more fields.
             return 0
         return self.root.getSize()
 
-    """splits the list at the i'th index
 
+    """returns the height of the AVL tree 
+
+    @rtype: int
+    @returns: the height of the AVL tree
+    """
+
+    def height(self):
+        if self.root is None:
+            return -1
+        return self.root.getHeight()
+
+
+    """joins self, x, and other 
+    @type x: str
+    @post: self < x < other (in terms of rank)
+    @param x: the value of the node to be ranked between self and other
+    @type other: AVLTreeList
+    @pre: other.empty() == False
+    @param other: an AVL tree to be joined with self
+    """
+    def join(self, x, other):
+        if self.root is None:
+            other.insert(0, x)
+            self.root = other.getRoot()
+        elif abs(self.height() - other.height()) <= 1:
+            new_root = AVLNode(x)
+            new_root.makeLeftChild(self.root)
+            new_root.makeRightChild(other.getRoot())
+            self.update([new_root])
+            self.root = new_root
+
+        elif self.height() < other.height():
+            h = self.height()
+            nodeB = other.getRoot()
+            while nodeB.getHeight() > h:
+                nodeB = nodeB.getLeft()
+            parent = nodeB.getParent()      # parent.height == h+1/h+2, nodeB.height == h/h-1
+            nodeX = AVLNode(x)
+            nodeX.makeLeftChild(self.root)
+            nodeX.makeRightChild(nodeB)
+            parent.makeLeftChild(nodeX)
+            self.root = other.getRoot()
+            self.fixTree(nodeX)
+        else:
+            h = other.height()
+            nodeB = self.root
+            while nodeB.getHeight() > h:
+                nodeB = nodeB.getRight()
+            parent = nodeB.getParent()
+            nodeX = AVLNode(x)
+            nodeX.makeLeftChild(nodeB)
+            nodeX.makeRightChild(other.getRoot())
+            parent.makeRightChild(nodeX)
+            self.fixTree(nodeX)
+
+
+    """splits the list at the i'th index
+    
 	@type i: int
 	@pre: 0 <= i < self.length()
 	@param i: The intended index in the list according to whom we split
@@ -525,7 +585,14 @@ Constructor, you are allowed to add more fields.
 	"""
 
     def concat(self, lst):
-        return None
+        heightDiff = abs(self.height() - lst.height())
+        if self.root is None:
+            self.root = lst.getRoot()
+        elif lst.getRoot() is not None:
+            x = self.last()
+            self.delete(self.length()-1)
+            self.join(x, lst)
+        return heightDiff
 
     """searches for a *value* in the list
 
@@ -546,3 +613,4 @@ Constructor, you are allowed to add more fields.
 
     def getRoot(self):
         return self.root
+
