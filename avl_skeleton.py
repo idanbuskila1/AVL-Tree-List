@@ -162,7 +162,7 @@ A class implementing the ADT list, using an AVL tree.
 
 
 class AVLTreeList(object):
-    virtualNode = AVLNode(None, -1, 0)  # class attribute
+    virtualNode = AVLNode(None, -1, 0)  # class attribute for the sentinel object
 
     """
 Constructor, you are allowed to add more fields.
@@ -524,13 +524,17 @@ Constructor, you are allowed to add more fields.
     @post: self < x < other (in terms of rank)
     @param x: the value of the node to be ranked between self and other
     @type other: AVLTreeList
-    @pre: other.empty() == False
     @param other: an AVL tree to be joined with self
     """
     def join(self, x, other):
-        if self.root is None:
+        if self.empty() and other.empty():
+            self.insert(0, x)
+        elif self.empty():
             other.insert(0, x)
             self.root = other.getRoot()
+        elif other.empty():
+            self.insert(self.length(), x)
+
         elif abs(self.height() - other.height()) <= 1:
             new_root = AVLNode(x)
             new_root.makeLeftChild(self.root)
@@ -574,7 +578,47 @@ Constructor, you are allowed to add more fields.
 	"""
 
     def split(self, i):
-        return None
+        nodeX = self.treeSelect(i+1)
+        val = nodeX.getValue()
+        left = AVLTreeList()
+        right = AVLTreeList()
+
+        if nodeX.getLeft() is not self.virtualNode:  # to be joined to a left sub-tree after turning left
+            left.makeRoot(nodeX.getLeft())
+
+        if nodeX.getRight() is not self.virtualNode:  # to be joined with a right sub-tree after turning right
+            right.makeRoot(nodeX.getRight())
+
+        if nodeX != self.root:
+            curNode = nodeX
+            parent = nodeX.getParent()
+            while parent is not None:
+                if parent.getLeft() == curNode:            # turned right
+                    rightRightTree = AVLTreeList()
+                    if parent.getRight() is not self.virtualNode:
+                        rightRightTree.makeRoot(parent.getRight())     # the right sub-tree
+
+                    right.join(parent.getValue(), rightRightTree)
+
+                else:                                       # turned left
+                    leftRightTree = AVLTreeList()  # to be joined to a left sub-tree after turning left
+                    if not left.empty():
+                        leftRightTree.makeRoot(left.getRoot())
+
+                    left = AVLTreeList()
+                    if parent.getLeft() is not self.virtualNode:
+                        left.makeRoot(parent.getLeft())     # the left sub-tree
+
+                    left.join(parent.getValue(), leftRightTree)
+
+                curNode = parent
+                parent = curNode.getParent()
+
+        self.root.garbage()     # this tree is destroyed
+        self.root = None
+
+        return [left, val, right]
+
 
     """concatenates lst to self
 
@@ -613,4 +657,14 @@ Constructor, you are allowed to add more fields.
 
     def getRoot(self):
         return self.root
+
+
+    """update root to be new_root
+
+       @param new_root: avl node. to be the new root of self.
+    """
+    def makeRoot(self, new_root):
+        self.root = new_root
+        self.root.setParent(None)
+
 
