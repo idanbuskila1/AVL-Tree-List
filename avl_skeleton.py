@@ -175,7 +175,7 @@ Constructor, you are allowed to add more fields.
         def printTree(node, level=0):
             if node is not self.virtualNode:
                 printTree(node.getRight(), level + 1)
-                print(' ' * 4 * level + '-> ' + node.getValue())
+                print(' ' * 4 * level + '-> ' + str(node.getValue()))
                 printTree(node.getLeft(), level + 1)
         if self.empty():
             print("empty tree")
@@ -210,6 +210,7 @@ Constructor, you are allowed to add more fields.
         return self.treeSelect(i+1).getValue()
 
     """finds and returns the node with rank i in tree
+           @pre: 0 <= i < self.length()
            @param i: the rank of desired node
            @type i: int
            @returns: rank i node
@@ -647,7 +648,22 @@ Constructor, you are allowed to add more fields.
 	"""
 
     def search(self, val):
-        return None
+        # traverse inorder the AVL sub-tree rooted in node
+        # return the first rank that contains val in node's sub-tree, -1 if not found.
+        def rec_search(node, val, cur_rank):
+            if node.getLeft() is not AVLTreeList.virtualNode:
+                res = rec_search(node.getLeft(), val, cur_rank)
+                if res != -1:
+                    return res
+            if node.getValue() == val:
+                return cur_rank + node.getLeft().getSize()
+            if node.getRight() is not AVLTreeList.virtualNode:
+                res = rec_search(node.getRight(), val, cur_rank + node.getLeft().getSize() + 1)
+                if res != -1:
+                    return res
+            return -1     # no val in this sub-tree
+
+        return rec_search(self.root, val, 0) if not self.empty() else -1
 
     """returns the root of the tree representing the list
 
@@ -666,5 +682,4 @@ Constructor, you are allowed to add more fields.
     def makeRoot(self, new_root):
         self.root = new_root
         self.root.setParent(None)
-
 
