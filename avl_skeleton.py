@@ -1,8 +1,8 @@
 # username - complete info
 # id1      - complete info
 # name1    - complete info
-# id2      - complete info
-# name2    - complete info
+# id2      - 320460306
+# name2    - anna petrenko
 
 
 """A class represnting a node in an AVL tree"""
@@ -546,7 +546,7 @@ Constructor, you are allowed to add more fields.
         elif self.height() < other.height():
             h = self.height()
             nodeB = other.getRoot()
-            while nodeB.getHeight() > h:
+            while nodeB.getHeight() > h + 1:    # +1 to make sure in case h==0, nodeB.getLeft() != self.virtualNode
                 nodeB = nodeB.getLeft()
             parent = nodeB.getParent()      # parent.height == h+1/h+2, nodeB.height == h/h-1
             nodeX = AVLNode(x)
@@ -558,7 +558,7 @@ Constructor, you are allowed to add more fields.
         else:
             h = other.height()
             nodeB = self.root
-            while nodeB.getHeight() > h:
+            while nodeB.getHeight() > h + 1:    # +1 to make sure in case h==0, nodeB.getRight() != self.virtualNode
                 nodeB = nodeB.getRight()
             parent = nodeB.getParent()
             nodeX = AVLNode(x)
@@ -573,16 +573,19 @@ Constructor, you are allowed to add more fields.
 	@type i: int
 	@pre: 0 <= i < self.length()
 	@param i: The intended index in the list according to whom we split
+	@type joinStats: bool
+	@param joinStats: if True, will also return a list of join costs
 	@rtype: list
 	@returns: a list [left, val, right], where left is an AVLTreeList representing the list until index i-1,
 	right is an AVLTreeList representing the list from index i+1, and val is the value at the i'th index.
 	"""
 
-    def split(self, i):
+    def split(self, i, joinStats=False):
         nodeX = self.treeSelect(i+1)
         val = nodeX.getValue()
         left = AVLTreeList()
         right = AVLTreeList()
+        joinStatsList = []
 
         if nodeX.getLeft() is not self.virtualNode:  # to be joined to a left sub-tree after turning left
             left.makeRoot(nodeX.getLeft())
@@ -599,6 +602,9 @@ Constructor, you are allowed to add more fields.
                     if parent.getRight() is not self.virtualNode:
                         rightRightTree.makeRoot(parent.getRight())     # the right sub-tree
 
+                    if joinStats:
+                        joinStatsList.append(abs(right.height()-rightRightTree.height()))
+
                     right.join(parent.getValue(), rightRightTree)
 
                 else:                                       # turned left
@@ -610,6 +616,9 @@ Constructor, you are allowed to add more fields.
                     if parent.getLeft() is not self.virtualNode:
                         left.makeRoot(parent.getLeft())     # the left sub-tree
 
+                    if joinStats:
+                        joinStatsList.append(abs(left.height()-leftRightTree.height()))
+
                     left.join(parent.getValue(), leftRightTree)
 
                 curNode = parent
@@ -618,7 +627,7 @@ Constructor, you are allowed to add more fields.
         self.root.garbage()     # this tree is destroyed
         self.root = None
 
-        return [left, val, right]
+        return [left, val, right] if not joinStats else [left, val, right, joinStatsList]
 
 
     """concatenates lst to self
@@ -649,7 +658,7 @@ Constructor, you are allowed to add more fields.
 
     def search(self, val):
         # traverse inorder the AVL sub-tree rooted in node
-        # return the first rank that contains val in node's sub-tree, -1 if not found.
+        # return the first index that contains val in node's sub-tree, -1 if not found.
         def rec_search(node, val, cur_rank):
             if node.getLeft() is not AVLTreeList.virtualNode:
                 res = rec_search(node.getLeft(), val, cur_rank)
@@ -682,4 +691,7 @@ Constructor, you are allowed to add more fields.
     def makeRoot(self, new_root):
         self.root = new_root
         self.root.setParent(None)
+
+    def append(self, val):
+        return self.insert(self.length(), val)
 
