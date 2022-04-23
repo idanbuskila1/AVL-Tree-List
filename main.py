@@ -1,40 +1,109 @@
 import random
+import sys
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from avl_skeleton import AVLNode, AVLTreeList
+from BSTList import BSTList
 
 
 def main():
-    # results = {'average join cost for random split': [],
-    #            'maximum join cost for random split': [],
-    #            'average join cost for last in left subtree split': [],
-    #            'maximum join cost for last in left subtree split': []}
-    # for i in range(1, 11):
-    #     for k in results.keys():
-    #         results[k].append(i*2)
-    # x = np.arange(1, 11, 1)
-    # fig=plt.figure(1)
-    # for key, data_list in results.items():
-    #     plt.plot(x, data_list, label=key)
-    # plt.xticks(x)
-    # plt.xlabel('tree size = 1000 * 2^i')
-    # plt.grid(axis='y')
-    # plt.title('q.2')
-    # plt.legend()
-    # fig.show()
-    #
-    # fig=plt.figure(2)
-    # for key in ('average join cost for last in left subtree split', 'average join cost for random split'):
-    #     plt.plot(x, results[key], label=key)
-    # plt.xticks(x)
-    # plt.xlabel('tree size = 1000 * 2^i')
-    # plt.grid(axis='y')
-    # plt.title('q.2')
-    # plt.legend()
-    # fig.show()
-    # plt.show()
-    q_2()
+    q_3()
+
+
+def q_3():
+    sys.setrecursionlimit(1000000)
+    MAX_I = 10
+    rebalancing_ops_mean = {'avl_first': [], 'avl_balanced': [], 'avl_random': [],
+                            'bst_first': [], 'bst_balanced': [], 'bst_random': []}
+    insertion_depth_mean = {'avl_first': [], 'avl_balanced': [], 'avl_random': [],
+                            'bst_first': [], 'bst_balanced': [], 'bst_random': []}
+
+    for i in range(1, MAX_I+1):
+        avl_first = AVLTreeList()
+        avl_balanced = AVLTreeList()
+        avl_random = AVLTreeList()
+        bst_first = BSTList()
+        bst_balanced = BSTList()
+        bst_random = BSTList()
+        n = i * 1000
+
+        rebalancing_ops_and_insertion_depth_i = {'avl_first': [], 'avl_balanced': [], 'avl_random': [],
+                                                 'bst_first': [], 'bst_balanced': [], 'bst_random': []}
+
+        ### first ###
+        for j in range(n):
+            rebalancing_ops_and_insertion_depth_i['avl_first'].append(avl_first.insert(0, str(j), depthStats=True))
+            rebalancing_ops_and_insertion_depth_i['bst_first'].append(bst_first.insert(0, str(j), depthStats=True))
+
+        ### balanced ###
+        # insertion indices;
+        # 0
+        # 0,2
+        # 0,2,4,6
+        # 0,2,4,6,8,10,12,14 etc.
+        count = 0
+        max_ = 2
+        rebalancing_ops_and_insertion_depth_i['avl_balanced'].append(avl_balanced.insert(0, str(count), depthStats=True))
+        rebalancing_ops_and_insertion_depth_i['bst_balanced'].append(bst_balanced.insert(0, str(count), depthStats=True))
+        count += 1
+        while avl_balanced.length() < n:
+            for j in range(0, max_ + 2, 2):
+                rebalancing_ops_and_insertion_depth_i['avl_balanced'].append(avl_balanced.insert(j, str(count), depthStats=True))
+                rebalancing_ops_and_insertion_depth_i['bst_balanced'].append(bst_balanced.insert(j, str(count), depthStats=True))
+                count += 1
+            max_ *= 2
+            max_ += 2
+
+        ### random ###
+        for j in range(n):
+            if avl_random.length() != 0:
+                index = random.randint(0, avl_random.length()-1)
+            else:
+                index = 0
+            rebalancing_ops_and_insertion_depth_i['avl_random'].append(avl_random.insert(index, str(j), depthStats=True))
+            rebalancing_ops_and_insertion_depth_i['bst_random'].append(bst_random.insert(index, str(j), depthStats=True))
+
+        for key in rebalancing_ops_mean.keys():
+            rebalancing_ops_mean[key].append(np.mean([x[0] for x in rebalancing_ops_and_insertion_depth_i[key]]))
+            insertion_depth_mean[key].append(np.mean([x[1] for x in rebalancing_ops_and_insertion_depth_i[key]]))
+
+    x = np.arange(1, MAX_I+1, 1)
+    fig = plt.figure(1)
+    for key, data_list in rebalancing_ops_mean.items():
+        plt.plot(x, data_list, label=key)
+    plt.xticks(x)
+    plt.xlabel('tree size = 1000 * i')
+    plt.grid(axis='y')
+    plt.title('q.3 mean number of rebalancing operations')
+    plt.legend()
+    fig.show()
+
+    fig = plt.figure(2)
+    for key, data_list in insertion_depth_mean.items():
+        plt.plot(x, data_list, label=key)
+    plt.xticks(x)
+    plt.xlabel('tree size = 1000 * i')
+    plt.grid(axis='y')
+    plt.title('q.3 mean of the inserted node depth')
+    plt.legend()
+    fig.show()
+
+    with open('q3_rebalancing_ops_means.txt', 'w') as f:
+        for key in rebalancing_ops_mean.keys():
+            f.write(key + '\n')
+            for i in range(0, MAX_I):
+                f.write(str(rebalancing_ops_mean[key][i]) + '\n')
+
+    with open('q3_insertion_depth_means.txt', 'w') as f:
+        for key in rebalancing_ops_mean.keys():
+            f.write(key + '\n')
+            for i in range(0, MAX_I):
+                f.write(str(insertion_depth_mean[key][i]) + '\n')
+
+    plt.show()
+
 
 
 def q_2():
@@ -219,7 +288,34 @@ def split_test():
     print()
 
 
+def balanced_insert_demo():
+    MAX_I = 2
+    for i in range(1, MAX_I):
 
+        avl_balanced = AVLTreeList()
+        n = i * 10
+        count = 0
+        max = 2
+
+        print('### [0] ###')
+        print('insert(' + str(0) + ',' + str(count) + ')')
+        avl_balanced.insert(0, str(count))
+        count += 1
+        avl_balanced.display()
+        print()
+
+        while avl_balanced.length() < n:
+
+            print('### [' + ','.join([str(i) for i in range(0, max + 2, 2)]) + '] ###')
+            for j in range(0, max + 2, 2):
+                print('insert(' + str(j) + ',' + str(count) + ')')
+                avl_balanced.insert(j, str(count))
+                avl_balanced.display()
+                print()
+                count += 1
+            max *= 2
+            max += 2
+        avl_balanced.display()
 
 
 
