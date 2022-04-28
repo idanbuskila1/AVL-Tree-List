@@ -1,4 +1,4 @@
-# Data_Structures_Proj1\n
-DS project 1\n
-this project implements a list ADT using an AVLTree DS.\n
+# Data_Structures_Proj1 <br>
+DS project 1 <br>
+this project implements a list ADT using an AVLTree DS. <br>
 main.py runs a few experiments.
